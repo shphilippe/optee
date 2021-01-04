@@ -20,6 +20,7 @@ bool processing_is_tee_asymm(uint32_t proc_id)
 	switch (proc_id) {
 	/* RSA flavors */
 	case PKCS11_CKM_RSA_PKCS:
+	case PKCS11_CKM_RSA_PKCS_OAEP:
 	case PKCS11_CKM_RSA_PKCS_PSS:
 	case PKCS11_CKM_MD5_RSA_PKCS:
 	case PKCS11_CKM_SHA1_RSA_PKCS:
@@ -54,6 +55,7 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 	static const uint32_t pkcs2tee_algo[][3] = {
 		/* RSA flavors */
 		{ PKCS11_CKM_RSA_PKCS, TEE_ALG_RSAES_PKCS1_V1_5, 0 },
+		{ PKCS11_CKM_RSA_PKCS_OAEP, 1, 0 },
 		{ PKCS11_CKM_RSA_PKCS_PSS, 1, 0 },
 		{ PKCS11_CKM_MD5_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_MD5,
 		  TEE_ALG_MD5 },
@@ -108,6 +110,9 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
 	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
 		rc = pkcs2tee_algo_rsa_pss(tee_id, proc_params);
+		break;
+	case PKCS11_CKM_RSA_PKCS_OAEP:
+		rc = pkcs2tee_algo_rsa_oaep(tee_id, tee_hash_id, proc_params);
 		break;
 	case PKCS11_CKM_ECDSA:
 	case PKCS11_CKM_ECDSA_SHA1:
@@ -629,6 +634,7 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	switch (proc->mecha_type) {
 	case PKCS11_CKM_ECDSA:
 	case PKCS11_CKM_RSA_PKCS:
+	case PKCS11_CKM_RSA_PKCS_OAEP:
 	case PKCS11_CKM_RSA_PKCS_PSS:
 		/* For operations using provided input data */
 		switch (function) {

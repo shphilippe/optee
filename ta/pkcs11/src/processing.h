@@ -139,6 +139,9 @@ void tee_release_rsa_pss_operation(struct active_processing *processing);
 enum pkcs11_rc pkcs2tee_algo_rsa_pss(uint32_t *tee_id,
 				     struct pkcs11_attribute_head *params);
 
+enum pkcs11_rc pkcs2tee_algo_rsa_oaep(uint32_t *tee_id, uint32_t *tee_hash_id,
+				      struct pkcs11_attribute_head *params);
+
 enum pkcs11_rc generate_rsa_keys(struct pkcs11_attribute_head *proc_params,
 				 struct obj_attrs **pub_head,
 				 struct obj_attrs **priv_head);
