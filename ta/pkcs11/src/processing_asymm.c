@@ -20,12 +20,18 @@ bool processing_is_tee_asymm(uint32_t proc_id)
 	switch (proc_id) {
 	/* RSA flavors */
 	case PKCS11_CKM_RSA_PKCS:
+	case PKCS11_CKM_RSA_PKCS_PSS:
 	case PKCS11_CKM_MD5_RSA_PKCS:
 	case PKCS11_CKM_SHA1_RSA_PKCS:
 	case PKCS11_CKM_SHA224_RSA_PKCS:
 	case PKCS11_CKM_SHA256_RSA_PKCS:
 	case PKCS11_CKM_SHA384_RSA_PKCS:
 	case PKCS11_CKM_SHA512_RSA_PKCS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
 	/* EC flavors */
 	case PKCS11_CKM_ECDSA:
 	case PKCS11_CKM_ECDSA_SHA1:
@@ -48,6 +54,7 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 	static const uint32_t pkcs2tee_algo[][3] = {
 		/* RSA flavors */
 		{ PKCS11_CKM_RSA_PKCS, TEE_ALG_RSAES_PKCS1_V1_5, 0 },
+		{ PKCS11_CKM_RSA_PKCS_PSS, 1, 0 },
 		{ PKCS11_CKM_MD5_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_MD5,
 		  TEE_ALG_MD5 },
 		{ PKCS11_CKM_SHA1_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_SHA1,
@@ -60,6 +67,16 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 		  TEE_ALG_SHA384 },
 		{ PKCS11_CKM_SHA512_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_SHA512,
 		  TEE_ALG_SHA512 },
+		{ PKCS11_CKM_SHA1_RSA_PKCS_PSS,
+		  TEE_ALG_RSASSA_PKCS1_PSS_MGF1_SHA1, TEE_ALG_SHA1 },
+		{ PKCS11_CKM_SHA224_RSA_PKCS_PSS,
+		  TEE_ALG_RSASSA_PKCS1_PSS_MGF1_SHA224, TEE_ALG_SHA224 },
+		{ PKCS11_CKM_SHA256_RSA_PKCS_PSS,
+		  TEE_ALG_RSASSA_PKCS1_PSS_MGF1_SHA256, TEE_ALG_SHA256 },
+		{ PKCS11_CKM_SHA384_RSA_PKCS_PSS,
+		  TEE_ALG_RSASSA_PKCS1_PSS_MGF1_SHA384, TEE_ALG_SHA384 },
+		{ PKCS11_CKM_SHA512_RSA_PKCS_PSS,
+		  TEE_ALG_RSASSA_PKCS1_PSS_MGF1_SHA512, TEE_ALG_SHA512 },
 		/* EC flavors (Must find key size from the object) */
 		{ PKCS11_CKM_ECDSA, 1, 0 },
 		{ PKCS11_CKM_ECDSA_SHA1, 1, TEE_ALG_SHA1 },
@@ -84,6 +101,14 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 		return PKCS11_RV_NOT_IMPLEMENTED;
 
 	switch (proc_params->id) {
+	case PKCS11_CKM_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+		rc = pkcs2tee_algo_rsa_pss(tee_id, proc_params);
+		break;
 	case PKCS11_CKM_ECDSA:
 	case PKCS11_CKM_ECDSA_SHA1:
 	case PKCS11_CKM_ECDSA_SHA224:
@@ -305,10 +330,26 @@ error:
 }
 
 static enum pkcs11_rc
-init_tee_operation(struct pkcs11_session *session __unused,
-		   struct pkcs11_attribute_head *proc_params __unused)
+init_tee_operation(struct pkcs11_session *session,
+		   struct pkcs11_attribute_head *proc_params)
 {
-	return PKCS11_CKR_OK;
+	enum pkcs11_rc rc = PKCS11_CKR_OK;
+
+	switch (proc_params->id) {
+	case PKCS11_CKM_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
+		rc = pkcs2tee_proc_params_rsa_pss(session->processing,
+						  proc_params);
+		break;
+	default:
+		break;
+	}
+
+	return rc;
 }
 
 enum pkcs11_rc init_asymm_operation(struct pkcs11_session *session,
@@ -357,6 +398,7 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	uint32_t hash_size = 0;
 	TEE_Attribute *tee_attrs = NULL;
 	size_t tee_attrs_count = 0;
+	uint32_t data32 = 0;
 	bool output_data = false;
 	struct active_processing *proc = session->processing;
 	size_t sz = 0;
@@ -391,6 +433,31 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 		return PKCS11_CKR_GENERAL_ERROR;
 	}
 
+	/* TEE attribute(s) required by the operation */
+	switch (proc->mecha_type) {
+	case PKCS11_CKM_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
+		tee_attrs = TEE_Malloc(sizeof(TEE_Attribute),
+				       TEE_USER_MEM_HINT_NO_FILL_ZERO);
+		if (!tee_attrs) {
+			rc = PKCS11_CKR_DEVICE_MEMORY;
+			goto out;
+		}
+
+		data32 = *(uint32_t *)proc->extra_ctx;
+		TEE_InitValueAttribute(&tee_attrs[tee_attrs_count],
+				       TEE_ATTR_RSA_PSS_SALT_LENGTH,
+				       data32, 0);
+		tee_attrs_count++;
+		break;
+	default:
+		break;
+	}
+
 	/*
 	 * Handle multi stage update step for mechas needing hash
 	 * calculation
@@ -408,6 +475,11 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 		case PKCS11_CKM_SHA256_RSA_PKCS:
 		case PKCS11_CKM_SHA384_RSA_PKCS:
 		case PKCS11_CKM_SHA512_RSA_PKCS:
+		case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+		case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+		case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+		case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+		case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
 			assert(proc->tee_hash_op_handle != TEE_HANDLE_NULL);
 
 			TEE_DigestUpdate(proc->tee_hash_op_handle, in_buf,
@@ -441,6 +513,11 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	case PKCS11_CKM_SHA256_RSA_PKCS:
 	case PKCS11_CKM_SHA384_RSA_PKCS:
 	case PKCS11_CKM_SHA512_RSA_PKCS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
 		assert(proc->tee_hash_op_handle != TEE_HANDLE_NULL);
 
 		hash_size = TEE_ALG_GET_DIGEST_SIZE(proc->tee_hash_algo);
@@ -513,6 +590,12 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	case PKCS11_CKM_SHA256_RSA_PKCS:
 	case PKCS11_CKM_SHA384_RSA_PKCS:
 	case PKCS11_CKM_SHA512_RSA_PKCS:
+	case PKCS11_CKM_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
 		/*
 		 * Constraints on key types and the length of the data for
 		 * these mechanisms are summarized in the following table.
@@ -546,6 +629,7 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	switch (proc->mecha_type) {
 	case PKCS11_CKM_ECDSA:
 	case PKCS11_CKM_RSA_PKCS:
+	case PKCS11_CKM_RSA_PKCS_PSS:
 		/* For operations using provided input data */
 		switch (function) {
 		case PKCS11_FUNCTION_ENCRYPT:
@@ -601,6 +685,11 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	case PKCS11_CKM_SHA256_RSA_PKCS:
 	case PKCS11_CKM_SHA384_RSA_PKCS:
 	case PKCS11_CKM_SHA512_RSA_PKCS:
+	case PKCS11_CKM_SHA1_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA256_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA384_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA512_RSA_PKCS_PSS:
+	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
 		/* For operations having hash operation use calculated hash */
 		switch (function) {
 		case PKCS11_FUNCTION_SIGN:
