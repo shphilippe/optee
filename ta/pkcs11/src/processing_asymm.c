@@ -352,9 +352,12 @@ error:
 
 static enum pkcs11_rc
 init_tee_operation(struct pkcs11_session *session,
-		   struct pkcs11_attribute_head *proc_params)
+		   struct pkcs11_attribute_head *proc_params,
+		   struct pkcs11_object *obj)
 {
 	enum pkcs11_rc rc = PKCS11_CKR_OK;
+	size_t modulus_size = 0;
+	uint32_t salt_size = 0;
 
 	switch (proc_params->id) {
 	case PKCS11_CKM_RSA_PKCS_PSS:
@@ -365,6 +368,12 @@ init_tee_operation(struct pkcs11_session *session,
 	case PKCS11_CKM_SHA224_RSA_PKCS_PSS:
 		rc = pkcs2tee_proc_params_rsa_pss(session->processing,
 						  proc_params);
+		if (rc)
+			return rc;
+
+		modulus_size = rsa_get_object_modulus_byte_size(obj);
+		salt_size = *(uint32_t *)session->processing->extra_ctx;
+		//PKCS11_CKR_KEY_SIZE_RANGE;
 		break;
 	default:
 		break;
@@ -390,7 +399,7 @@ enum pkcs11_rc init_asymm_operation(struct pkcs11_session *session,
 	if (rc)
 		return rc;
 
-	return init_tee_operation(session, proc_params);
+	return init_tee_operation(session, proc_params, obj);
 }
 
 /*

@@ -495,3 +495,14 @@ size_t rsa_get_input_max_byte_size(TEE_OperationHandle op)
 
 	return info.maxKeySize / 8;
 }
+
+size_t rsa_get_object_modulus_byte_size(struct pkcs11_object *obj)
+{
+	uint32_t modulus_size = 0;
+	struct obj_attrs *attrs = obj->attributes;
+
+	if (get_attribute_ptr(attrs, PKCS11_CKA_MODULUS, NULL, &modulus_size))
+		return 0;
+
+	return modulus_size;
+}

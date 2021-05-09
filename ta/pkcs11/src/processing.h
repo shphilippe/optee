@@ -158,5 +158,6 @@ enum pkcs11_rc generate_rsa_keys(struct pkcs11_attribute_head *proc_params,
 				 struct obj_attrs **priv_head);
 
 size_t rsa_get_input_max_byte_size(TEE_OperationHandle op);
+size_t rsa_get_object_modulus_byte_size(struct pkcs11_object *obj);
 
 #endif /*PKCS11_TA_PROCESSING_H*/
