@@ -5,7 +5,7 @@
 #ifndef PKCS11_TA_PKCS11_TOKEN_H
 #define PKCS11_TA_PKCS11_TOKEN_H
 
-#include <sys/queue.h>
+#include "../../../lib/libutils/isoc/include/sys/queue.h"
 #include <tee_api_types.h>
 #include <tee_internal_api.h>
 #include <utee_defines.h>

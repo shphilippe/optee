@@ -4,14 +4,15 @@
  */
 
 #include <assert.h>
-#include <config.h>
-#include <confine_array_index.h>
+//#include <config.h>
+#define IS_ENABLED(a) 0
+#include <../../../lib/libutils/ext/include/confine_array_index.h>
 #include <pkcs11_ta.h>
 #include <printk.h>
-#include <pta_system.h>
+#include "../../../lib/libutee/include/pta_system.h"
 #include <string.h>
 #include <string_ext.h>
-#include <sys/queue.h>
+#include "../../../lib/libutils/isoc/include/sys/queue.h"
 #include <tee_api_types.h>
 #include <tee_internal_api_extensions.h>
 #include <util.h>
@@ -23,6 +24,8 @@
 #include "processing.h"
 #include "serializer.h"
 #include "token_capabilities.h"
+
+#include "compat.h"
 
 /* Provide 3 slots/tokens, ID is token index */
 #ifndef CFG_PKCS11_TA_TOKEN_COUNT

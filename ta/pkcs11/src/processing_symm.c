@@ -20,6 +20,8 @@
 #include "processing.h"
 #include "serializer.h"
 
+
+#include "compat.h"
 struct input_data_ref {
 	size_t size;
 	void *data;

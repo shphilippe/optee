@@ -4,7 +4,6 @@
  */
 
 #include <assert.h>
-#include <config.h>
 #include <pkcs11_ta.h>
 #include <string.h>
 #include <tee_api_defines.h>
@@ -20,6 +19,8 @@
 #include "pkcs11_token.h"
 #include "processing.h"
 #include "serializer.h"
+
+#define IS_ENABLED(a) 0
 
 bool processing_is_tee_digest(enum pkcs11_mechanism_id mecha_id)
 {

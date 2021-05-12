@@ -14,6 +14,9 @@
 #include "pkcs11_token.h"
 #include "serializer.h"
 
+#define ADD_OVERFLOW(a, b, res) __builtin_add_overflow((a), (b), (res))
+typedef uintptr_t vaddr_t;
+
 /*
  * Util routines for serializes unformatted arguments in a client memref
  */

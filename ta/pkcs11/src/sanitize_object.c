@@ -19,6 +19,8 @@
 #include "serializer.h"
 #include "token_capabilities.h"
 
+#define ADD_OVERFLOW(a, b, res) __builtin_add_overflow((a), (b), (res))
+
 /*
  * Functions to generate a serialized object.
  * References are pointers to struct serializer.

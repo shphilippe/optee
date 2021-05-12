@@ -15,6 +15,8 @@
 #include "processing.h"
 #include "serializer.h"
 
+#include "compat.h"
+
 bool processing_is_tee_asymm(uint32_t proc_id)
 {
 	switch (proc_id) {
@@ -59,7 +61,7 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 		{ PKCS11_CKM_RSA_PKCS, TEE_ALG_RSAES_PKCS1_V1_5, 0 },
 		{ PKCS11_CKM_RSA_PKCS_OAEP, 1, 0 },
 		{ PKCS11_CKM_RSA_PKCS_PSS, 1, 0 },
-		{ PKCS11_CKM_MD5_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_MD5,
+		/*{ PKCS11_CKM_MD5_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_MD5,
 		  TEE_ALG_MD5 },
 		{ PKCS11_CKM_SHA1_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_SHA1,
 		  TEE_ALG_SHA1 },
@@ -70,7 +72,7 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 		{ PKCS11_CKM_SHA384_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_SHA384,
 		  TEE_ALG_SHA384 },
 		{ PKCS11_CKM_SHA512_RSA_PKCS, TEE_ALG_RSASSA_PKCS1_V1_5_SHA512,
-		  TEE_ALG_SHA512 },
+		  TEE_ALG_SHA512 },*/
 		{ PKCS11_CKM_SHA1_RSA_PKCS_PSS,
 		  TEE_ALG_RSASSA_PKCS1_PSS_MGF1_SHA1, TEE_ALG_SHA1 },
 		{ PKCS11_CKM_SHA224_RSA_PKCS_PSS,
@@ -135,12 +137,12 @@ pkcs2tee_algorithm(uint32_t *tee_id, uint32_t *tee_hash_id,
 		rc = PKCS11_CKR_OK;
 		break;
 	}
-
+/*
 	if (*tee_id == TEE_ALG_RSAES_PKCS1_V1_5 &&
 	    (function == PKCS11_FUNCTION_SIGN ||
 	     function == PKCS11_FUNCTION_VERIFY))
 		*tee_id = TEE_ALG_RSASSA_PKCS1_V1_5;
-
+*/
 	return rc;
 }
 
@@ -462,7 +464,7 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 	default:
 		return PKCS11_CKR_GENERAL_ERROR;
 	}
-
+	
 	/* TEE attribute(s) required by the operation */
 	switch (proc->mecha_type) {
 	case PKCS11_CKM_RSA_PKCS_PSS:
@@ -687,6 +689,7 @@ enum pkcs11_rc step_asymm_operation(struct pkcs11_session *session,
 						       tee_attrs_count,
 						       in_buf, in_size,
 						       out_buf, &out_size);
+            
 			output_data = true;
 			rc = tee2pkcs_error(res);
 			break;
